@@ -1,4 +1,11 @@
 # 📡 Telecom Customer Churn Prediction & API
+**Live API Demo:** [Coming Soon / Link to follow]  
+**Project Status:** ✅ Model Trained | ✅ API Built | 🚀 Deployment Pending
+
+## 📝 Description
+This project was built as a professional-grade solution for a Telecom Churn challenge. As a Computer Science student at NU Lipa (Batch 2028), I developed this end-to-end pipeline to demonstrate how AI can solve real-world business problems. 
+
+The AI analyzes customer behavior and contract details to predict if a user will leave the service. By deploying this as a FastAPI web server, I've bridged the gap between raw data science and software engineering.
 
 An end-to-end Machine Learning pipeline developed to predict customer churn with **XGBoost**, featuring a live **FastAPI** deployment.
 
