@@ -1,0 +1,9 @@
+# Ignore raw data files
+*.csv
+
+# Ignore Jupyter notebook system checkpoints
+.ipynb_checkpoints/
+__pycache__/
+
+# Ignore environment variables or secret keys if you add them later
+.env
