@@ -26,19 +26,32 @@ handled with `scale_pos_weight`.
 | XGBoost + class weighting      |      0.54       |     0.68     |   0.60   |
 | **XGBoost tuned (final)**      |      0.53       |   **0.80**   | **0.63** |
 
-The final model **catches 4 out of 5 customers who will actually churn**.
-Hyperparameters were tuned with `RandomizedSearchCV` (60 fits). The strongest
-churn signal in the data: **contract type** — two-year contracts are the best
-retention predictor.
+The final model **catches 4 out of 5 customers who will actually churn**,
+with **0.847 ROC-AUC** and **0.662 PR-AUC** on the held-out test set.
+Hyperparameters were tuned with `RandomizedSearchCV` (60 fits, scored on F1).
+The strongest churn signal in the data: **contract type** — two-year contracts
+are the best retention predictor.
+
+### Is this the ceiling? (verified: yes)
+
+To check whether the model left performance on the table, I ran a wider
+follow-up experiment: a 40-candidate regularized search (`min_child_weight`,
+`gamma`, `reg_lambda`) scored on average precision, plus decision-threshold
+tuning selected on out-of-fold training predictions (never on the test set).
+The result **matched but did not beat** this model on every metric (±0.01).
+On this dataset, ~0.63 churn-class F1 is the practical ceiling — further gains
+would have to come from richer features or more data, not from hyperparameters.
 
 ## 🏗️ Project structure
 
 ```
 ├── app.py                          # FastAPI service: POST /predict, GET /health
+├── train.py                        # one-command reproducible training pipeline
 ├── requirements.txt
 ├── models/
 │   ├── churn_xgboost_model.joblib  # trained, tuned classifier
-│   └── churn_scaler.joblib         # StandardScaler fitted on training data
+│   ├── churn_scaler.joblib         # StandardScaler fitted on training data
+│   └── model_meta.json             # feature order + hyperparameters (used by the API)
 └── notebooks/
     └── telco_customer_churn.ipynb  # full pipeline: EDA → cleaning → training → tuning
 ```
@@ -59,8 +72,30 @@ curl -X POST http://127.0.0.1:8000/predict \
   -d '{"features": {"tenure": 12, "MonthlyCharges": 70.35, "TotalCharges": 845.5, "Contract_Two year": 0, ...}}'
 ```
 
-The payload takes all 31 one-hot encoded features — see the last cells of the
-notebook for a complete example request built from a real test-set row.
+The payload takes all 30 one-hot encoded features (the API validates them and
+returns a helpful 422 listing anything missing). Response:
+
+```json
+{
+  "status": "success",
+  "churn": true,
+  "churn_probability": 0.6629,
+  "risk_tier": "High",
+  "prediction": "Churn (High Risk)"
+}
+```
+
+The probability lets a retention team **rank** customers instead of just
+flagging them; `risk_tier` buckets it for dashboards.
+
+## 🔁 Reproduce the model
+
+```bash
+python train.py --csv Telco.csv
+```
+
+Retrains from the raw CSV with the winning hyperparameters and rewrites
+`models/` (classification report + ROC/PR-AUC printed on completion).
 
 ## 📚 Dataset
 
